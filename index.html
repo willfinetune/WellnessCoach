@@ -1,36 +1,41 @@
-9<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>WellnessCoach</title>
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#43C67E">
-    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
     <style>
-      html,body,iframe{margin:0;height:100%;width:100%;background:#0f172a}
-      iframe{border:0;display:block}
-      /* Install button (only shows when eligible) */
-      #install {
-        position: fixed; right: 16px; bottom: 16px;
-        padding: 12px 16px; border: 0; border-radius: 10px;
-        font-size: 14px; background:#43C67E; color:#0f172a;
-        box-shadow: 0 6px 18px rgba(0,0,0,.25); display:none;
+      html,body{margin:0;height:100%;background:#0f172a;color:#e2e8f0;font-family:system-ui}
+      h1{margin:16px 12px;font-weight:800;font-size:36px}
+      p{margin:0 12px 20px;color:#9aa3af}
+      #install{
+        position:fixed;left:12px;top:88px;
+        padding:12px 16px;border:0;border-radius:10px;
+        font-size:14px;background:#43C67E;color:#0b1324;
+        box-shadow:0 6px 18px rgba(0,0,0,.25);display:none
       }
     </style>
+  </head>
+  <body>
+    <h1>💚 WellnessCoach</h1>
+    <p>This small installable launcher opens the full app.</p>
+    <button id="install">Install</button>
 
     <script>
-      // Register SW at the ROOT so it can control "/"
+      // 1) Register SW at the ROOT so it controls all pages
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+          navigator.serviceWorker.register('/sw.js').catch(console.error);
         });
       }
 
-      // Capture the browser's "beforeinstallprompt" and show our button
+      // 2) Handle beforeinstallprompt + show button
       let deferredPrompt = null;
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -39,66 +44,20 @@
         btn.style.display = 'inline-block';
       });
 
-      // When user taps "Install", trigger the native prompt
-      function doInstall() {
+      // 3) Click handler to show the native install prompt
+      document.getElementById('install').addEventListener('click', async () => {
         const btn = document.getElementById('install');
-        btn.style.display = 'none';
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.finally(() => { deferredPrompt = null; });
+        btn.disabled = true;
+        try {
+          if (deferredPrompt) {
+            await deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+          }
+        } finally {
+          btn.disabled = false;
         }
-      }
+      });
     </script>
-  </head>
-  <body>
-  <h1 style="font-family:system-ui;margin:16px 12px 8px;">💚 WellnessCoach</h1>
-  <p style="margin:0 12px 20px;color:#9aa3af;font-family:system-ui">
-    This small installable launcher opens the full app.
-  </p>
-
-  <!-- Install button (shows only when eligible) -->
-  <button id="install"
-  <!-- Install bar -->
-<div id="installBar" style="
-  position: fixed; left: 0; right: 0; bottom: 0;
-  display: flex; gap: 12px; align-items: center; justify-content: space-between;
-  padding: 12px 16px; background:#0b1220; color:#e5e7eb; border-top: 1px solid #1f2937; z-index: 9999;">
-  <div>Install WellnessCoach on your phone</div>
-  <button id="installBtn" style="padding:10px 14px;border:0;border-radius:10px;background:#43C67E;color:#0b1220;font-weight:600;">
-    Install
-  </button>
-</div>
-
-<script>
-  let deferredPrompt = null;
-  const bar = document.getElementById('installBar');
-  const btn = document.getElementById('installBtn');
-
-  // Listen for Chrome's install event
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;                 // save the event
-    bar.style.display = 'flex';         // show the bar
-  });
-
-  // Clicking Install: either show the prompt, or show fallback
-  btn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-      btn.disabled = true;
-      await deferredPrompt.prompt();
-      deferredPrompt = null;
-      bar.style.display = 'none';
-    } else {
-      alert(
-        'To install:\n\n' +
-        '• Android (Chrome): 3-dot menu → “Add to Home screen”.\n' +
-        '• iPhone (Safari): Share icon → “Add to Home Screen”.'
-      );
-    }
-  });
-
-  // Always show bar (gives fallback even if prompt not fired)
-  bar.style.display = 'flex';
-</script>
-</body>
+  </body>
 </html>
