@@ -11,7 +11,8 @@
     {
       "src": "/static/file_00000000c9b061fab40d391bb3ffd5d2.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/static/file_00000000174c61f6a427f26b72baa8df.png",
@@ -21,8 +22,7 @@
     {
       "src": "/static/file_000000001e8c62439bd32306d8c7ab28.png",
       "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
