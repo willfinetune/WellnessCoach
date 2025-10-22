@@ -1,11 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "icons/**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/(.*)", "dest": "/$1" }
+  "rewrites": [
+    { "source": "/service-worker.js", "destination": "/static/service-worker.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
