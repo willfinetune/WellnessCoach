@@ -1,17 +1,14 @@
 // static/service-worker.js
-const CACHE_NAME = 'wellnesscoach-v3'; // bumped version to force reload
+const CACHE_NAME = 'wellnesscoach-v4'; // bump to force clients to refresh
 
 const ASSETS = [
-  '/WellnessCoach/',
-
-  // Static assets
-  '/WellnessCoach/static/manifest.webmanifest',
-  '/WellnessCoach/static/file_00000000c9b061fab40d391bb3ffd5d2.png',
-  '/WellnessCoach/static/file_00000000174c61f6a427f26b72baa8df.png',
-  '/WellnessCoach/static/file_000000001e8c62439bd32306d8c7ab28.png'
+  '/',                                   // app root
+  '/static/manifest.webmanifest',        // manifest
+  '/static/file_00000000c9b061fab40d391bb3ffd5d2.png', // 512
+  '/static/file_00000000174c61f6a427f26b72baa8df.png', // 192
+  '/static/file_000000001e8c62439bd32306d8c7ab28.png'  // 180
 ];
 
-// Install service worker and cache assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -20,7 +17,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate and clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -30,11 +26,10 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Serve cached files when offline
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((resp) =>
-      resp || fetch(event.request).catch(() => caches.match('/WellnessCoach/'))
+      resp || fetch(event.request).catch(() => caches.match('/'))
     )
   );
 });
