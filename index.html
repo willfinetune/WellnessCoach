@@ -51,10 +51,42 @@
     </script>
   </head>
   <body>
-    <!-- Your Streamlit app inside -->
-    <iframe src="https://wellnesscoach.streamlit.app/"></iframe>
+  <h1 style="font-family:system-ui;margin:16px 12px 8px;">💚 WellnessCoach</h1>
+  <p style="margin:0 12px 20px;color:#9aa3af;font-family:system-ui">
+    This small installable launcher opens the full app.
+  </p>
 
-    <!-- Fallback Install button (appears when eligible) -->
-    <button id="install" onclick="doInstall()">Install app</button>
-  </body>
+  <!-- Install button (shows only when eligible) -->
+  <button id="install"
+          style="display:none;margin:0 12px 16px;padding:14px 18px;font-size:16px;border:0;border-radius:10px;background:#43C67E;color:white">
+    Install WellnessCoach
+  </button>
+
+  <!-- Opens Streamlit app in a new tab (no iframe) -->
+  <button id="openApp"
+          style="margin:0 12px;padding:14px 18px;font-size:16px;border:0;border-radius:10px;background:#111827;color:white">
+    Open WellnessCoach
+  </button>
+
+  <script>
+    // Show Install button when the PWA is eligible
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('install');
+      btn.style.display = 'inline-block';
+      btn.onclick = async () => {
+        btn.disabled = true;
+        await deferredPrompt.prompt();
+        deferredPrompt = null;
+      };
+    });
+
+    // Open Streamlit app (cannot be iframed)
+    document.getElementById('openApp').onclick = () => {
+      window.open('https://wellnesscoach.streamlit.app/', '_blank', 'noopener,noreferrer');
+    };
+  </script>
+</body>
 </html>
