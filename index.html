@@ -51,6 +51,7 @@
     </script>
   </head>
   <body>
+  <body>
   <h1 style="font-family:system-ui;margin:16px 12px 8px;">💚 WellnessCoach</h1>
   <p style="margin:0 12px 20px;color:#9aa3af;font-family:system-ui">
     This small installable launcher opens the full app.
@@ -62,11 +63,15 @@
     Install WellnessCoach
   </button>
 
-  <!-- Opens Streamlit app in a new tab (no iframe) -->
-  <button id="openApp"
-          style="margin:0 12px;padding:14px 18px;font-size:16px;border:0;border-radius:10px;background:#111827;color:white">
+  <!-- Open app: use a normal link instead of JS window.open -->
+  <a id="openApp"
+     href="https://wellnesscoach.streamlit.app/"
+     target="_blank" rel="noopener noreferrer"
+     style="display:inline-block;margin:0 12px;padding:14px 18px;
+            font-size:16px;border:0;border-radius:10px;
+            background:#111827;color:white;text-decoration:none">
     Open WellnessCoach
-  </button>
+  </a>
 
   <script>
     // Show Install button when the PWA is eligible
@@ -82,11 +87,6 @@
         deferredPrompt = null;
       };
     });
-
-    // Open Streamlit app (cannot be iframed)
-    document.getElementById('openApp').onclick = () => {
-      window.open('https://wellnesscoach.streamlit.app/', '_blank', 'noopener,noreferrer');
-    };
   </script>
 </body>
 </html>
