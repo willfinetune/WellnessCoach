@@ -1,9 +1,15 @@
 {
   "name": "WellnessCoach",
   "short_name": "WellnessCoach",
-  "description": "Your AI-powered wellness coach.",
+  "description": "Your AI-powered wellness assistant",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#43C67E",
+  "icons": [
+    { "src": "/WellnessCoach/static/file_00000000c9b061fab40d391bb3ffd5d2.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/WellnessCoach/static/file_00000000174c61f6a427f26b72baa8df.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/WellnessCoach/static/file_000000001e8c62439bd32306d8c7ab28.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
