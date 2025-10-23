@@ -1,8 +1,18 @@
 {
-  "routes": [
-    { "src": "^/sw\\.js$", "headers": { "Content-Type": "application/javascript; charset=utf-8" }, "dest": "/sw.js" },
-    { "src": "^/manifest\\.webmanifest$", "headers": { "Content-Type": "application/manifest+json; charset=utf-8" }, "dest": "/manifest.webmanifest" },
-    { "src": "^/icons/(.*)$", "dest": "/icons/$1" },
-    { "src": ".*", "dest": "/index.html" }
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
+        { "key": "Cache-Control", "value": "no-store, max-age=0" }
+      ]
+    }
   ]
 }
