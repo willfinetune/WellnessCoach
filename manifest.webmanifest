@@ -3,6 +3,12 @@
   "name": "WellnessCoach",
   "icons": [
     {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
@@ -20,6 +26,6 @@
   "display": "standalone",
   "background_color": "#E6F0E6",
   "theme_color": "#43C67E",
-  "id": "https://wellness-coach-eight.vercel.app/",
-  "description": "Quick launcher that opens your WellnessCoach Streamlit app."
+  "id": "https://wellness-coach-eight.vercel.app",
+  "description": "Quick launch the WellnessCoach app"
 }
