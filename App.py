@@ -168,3 +168,29 @@ for msg in st.session_state.messages:
         st.chat_message("user").markdown(msg["content"])
     else:
         st.chat_message("assistant").markdown(msg["content"])
+# --- iPhone Install Popup (appears only on iOS Safari) ---
+st.markdown("""
+    <script>
+    const ua = window.navigator.userAgent;
+    const isiOS = /iPad|iPhone|iPod/.test(ua);
+    const isInStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isiOS && !isInStandalone) {
+        const banner = document.createElement('div');
+        banner.style.position = 'fixed';
+        banner.style.bottom = '0';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.background = '#198754';
+        banner.style.color = 'white';
+        banner.style.padding = '14px';
+        banner.style.textAlign = 'center';
+        banner.style.fontSize = '15px';
+        banner.style.zIndex = '9999';
+        banner.style.fontFamily = 'sans-serif';
+        banner.style.boxShadow = '0 -2px 8px rgba(0,0,0,0.25)';
+        banner.innerHTML = '📱 <b>iPhone user?</b> Tap <img src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Share_iOS.png" width="16" style="vertical-align:middle;"> then <b>Add to Home Screen</b> to install <b>WellnessCoach</b>!';
+        document.body.appendChild(banner);
+    }
+    </script>
+""", unsafe_allow_html=True)
