@@ -1,46 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>WellnessCoach</title>
-<link rel="icon" href="https://wellnesscoach.streamlit.app/favicon.png">
-<style>
-  body { background:#0f172a; color:#f1f5f9; font-family:system-ui; text-align:center; margin-top:70px;}
-  h1 { font-size:2em; color:#43C67E; }
-  p { color:#94a3b8; margin:0 1.5rem 1.5rem; }
-  button {
-    background:#43C67E; border:0; border-radius:12px; color:#111827;
-    padding:14px 20px; font-size:16px; font-weight:600;
-    box-shadow:0 5px 18px rgba(0,0,0,0.3); cursor:pointer;
-  }
-  a { display:block; margin-top:1rem; color:#43C67E; text-decoration:underline; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+
+  <title>WellnessCoach</title>
+  <meta name="description" content="Quick launcher that opens your WellnessCoach Streamlit app." />
+
+  <!-- PWA meta -->
+  <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
+  <meta name="theme-color" content="#43C67E" />
+
+  <!-- iOS (A2HS uses these, not the manifest) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WellnessCoach" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <style>
+    :root { color-scheme: dark light; }
+    html,body{height:100%;margin:0}
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+      background:#0f1624; color:#cfd9e3; display:grid; place-items:center; padding:24px;
+    }
+    .card{
+      max-width:720px; width:100%; text-align:center; padding:32px 24px; border-radius:20px;
+      background: #0f1b2d; box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    }
+    h1{font-size:42px;margin:0 0 8px;display:flex;gap:12px;align-items:center;justify-content:center}
+    .heart{font-size:40px}
+    p{opacity:.85;margin:0 0 24px}
+    .row{display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
+    button,a.btn{
+      font-size:18px; border:0; border-radius:14px; padding:14px 22px; cursor:pointer;
+      background:#43C67E; color:#0b1422; text-decoration:none; font-weight:700; box-shadow:0 8px 20px rgba(67,198,126,.35)
+    }
+    button.secondary, a.secondary{
+      background:transparent; color:#8adfb2; box-shadow:none; text-decoration:underline; font-weight:600;
+    }
+    .hint{font-size:14px; opacity:.7; margin-top:14px}
+    #installBtn{display:none}
+  </style>
 </head>
 <body>
+  <main class="card">
+    <h1><span class="heart">💚</span> WellnessCoach</h1>
+    <p>This page lets you instantly install WellnessCoach on your home screen.</p>
+    <div class="row">
+      <button id="installBtn">Install App</button>
+      <a class="btn secondary" href="https://wellnesscoach.streamlit.app/" rel="noopener">Open WellnessCoach</a>
+    </div>
+    <div id="hint" class="hint" aria-live="polite"></div>
+  </main>
 
-<h1>💚 WellnessCoach</h1>
-<p>This page lets you instantly install WellnessCoach on your home screen.</p>
-<button id="installBtn">Install App</button>
-<a href="https://wellnesscoach.streamlit.app/" target="_blank" rel="noopener">Open WellnessCoach</a>
+  <script>
+    // --- SETTINGS: where the real app lives ---
+    const APP_URL = 'https://wellnesscoach.streamlit.app/';
 
-<script>
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-});
+    // --- Redirect immediately when running as an installed PWA ---
+    const inStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true; // iOS
+    if (inStandalone) {
+      // Open the real app full-screen (no URL bar).
+      window.location.replace(APP_URL);
+    }
 
-document.getElementById('installBtn').addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-  } else {
-    alert("If no popup shows, use Chrome menu ⋮ → 'Add to Home screen'");
-  }
-});
-</script>
+    // --- Register the service worker at the ROOT so it controls the whole origin ---
+    if ('serviceWorker' in navigator) {
+      // Always re-check for updates when we hit this page
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          // Force an update check on each load so changes propagate quickly
+          if (reg.update) reg.update();
+        } catch(e){ console.warn('SW register failed', e); }
+      });
+    }
 
+    // --- Polite install flow with fallback ---
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
+    const hint = document.getElementById('hint');
+
+    // Capture the event so we can show our own button
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-block';
+      hint.textContent = '';
+    });
+
+    // If the browser doesn’t fire beforeinstallprompt (common on some devices),
+    // show a short fallback hint for using the menu.
+    function showMenuHint() {
+      const isAndroidChrome = /Android/i.test(navigator.userAgent) && /Chrome/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.platform) || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+      if (isIOS) {
+        hint.textContent = "On iPhone/iPad: Share button → 'Add to Home Screen'.";
+      } else if (isAndroidChrome) {
+        hint.textContent = "If no popup shows, use Chrome menu ⋮ → 'Install app'.";
+      } else {
+        hint.textContent = "Use your browser menu to 'Install' or 'Add to Home screen'.";
+      }
+    }
+
+    // If we didn’t receive beforeinstallprompt within a second, show the hint
+    setTimeout(() => {
+      if (!deferredPrompt && !inStandalone) showMenuHint();
+    }, 1200);
+
+    // When the user taps "Install", trigger the native prompt
+    installBtn.addEventListener('click', async () => {
+      installBtn.disabled = true;
+      try {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const choice = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+          if (choice.outcome !== 'accepted') showMenuHint();
+        } else {
+          // Fallback path if event wasn’t captured
+          showMenuHint();
+          alert("If no popup shows, use your browser menu → 'Install app' / 'Add to Home screen'.");
+        }
+      } finally {
+        installBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
