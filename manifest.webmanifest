@@ -1,12 +1,15 @@
 {
   "name": "WellnessCoach",
   "short_name": "WellnessCoach",
-  "id": "/",
+  "description": "Quick launcher that opens your WellnessCoach Streamlit app.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#111827",
   "theme_color": "#43C67E",
+  "categories": ["health", "fitness", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -20,6 +23,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "description": "Quick launcher that opens your WellnessCoach Streamlit app."
+  ]
 }
