@@ -3,15 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-
   <title>WellnessCoach</title>
   <meta name="description" content="Quick launcher that opens your WellnessCoach Streamlit app." />
 
-  <!-- PWA meta -->
   <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
   <meta name="theme-color" content="#43C67E" />
 
-  <!-- iOS (A2HS uses these, not the manifest) -->
+  <!-- iOS A2HS bits -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WellnessCoach" />
@@ -21,26 +19,37 @@
     :root { color-scheme: dark light; }
     html,body{height:100%;margin:0}
     body{
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
       background:#0f1624; color:#cfd9e3; display:grid; place-items:center; padding:24px;
     }
     .card{
-      max-width:720px; width:100%; text-align:center; padding:32px 24px; border-radius:20px;
-      background: #0f1b2d; box-shadow: 0 10px 30px rgba(0,0,0,.3);
+      max-width:760px; width:100%; text-align:center; padding:32px 24px; border-radius:24px;
+      background:#0f1b2d; box-shadow:0 10px 30px rgba(0,0,0,.3)
     }
-    h1{font-size:42px;margin:0 0 8px;display:flex;gap:12px;align-items:center;justify-content:center}
+    h1{font-size:42px;margin:0 0 10px;display:flex;gap:12px;align-items:center;justify-content:center}
     .heart{font-size:40px}
-    p{opacity:.85;margin:0 0 24px}
-    .row{display:flex; gap:16px; justify-content:center; flex-wrap:wrap}
+    p{opacity:.9;margin:0 0 26px}
+    .row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
     button,a.btn{
-      font-size:18px; border:0; border-radius:14px; padding:14px 22px; cursor:pointer;
-      background:#43C67E; color:#0b1422; text-decoration:none; font-weight:700; box-shadow:0 8px 20px rgba(67,198,126,.35)
+      font-size:18px;border:0;border-radius:14px;padding:14px 22px;cursor:pointer;
+      background:#43C67E;color:#0b1422;text-decoration:none;font-weight:700;box-shadow:0 8px 20px rgba(67,198,126,.35)
     }
-    button.secondary, a.secondary{
-      background:transparent; color:#8adfb2; box-shadow:none; text-decoration:underline; font-weight:600;
+    a.secondary{
+      background:transparent;color:#8adfb2;text-decoration:underline;font-weight:600;box-shadow:none
     }
-    .hint{font-size:14px; opacity:.7; margin-top:14px}
-    #installBtn{display:none}
+    .hint{font-size:14px;opacity:.75;margin-top:14px}
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;padding:18px;z-index:999;
+    }
+    .modal{max-width:560px;width:100%;background:#0f1b2d;color:#cfd9e3;border-radius:18px;padding:22px}
+    .modal h2{margin:0 0 10px;font-size:22px}
+    .modal ol{margin:8px 0 0 22px}
+    .modal .close{
+      margin-top:18px;background:transparent;border:1px solid #405575;color:#cfd9e3;border-radius:10px;padding:10px 14px;cursor:pointer
+    }
   </style>
 </head>
 <body>
@@ -54,82 +63,133 @@
     <div id="hint" class="hint" aria-live="polite"></div>
   </main>
 
+  <!-- instructions modal -->
+  <div id="backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="instTitle">
+    <div class="modal">
+      <h2 id="instTitle">Install to Home Screen</h2>
+      <div id="steps">
+        <!-- steps injected here -->
+      </div>
+      <button class="close" id="closeModal">Close</button>
+    </div>
+  </div>
+
   <script>
-    // --- SETTINGS: where the real app lives ---
     const APP_URL = 'https://wellnesscoach.streamlit.app/';
 
-    // --- Redirect immediately when running as an installed PWA ---
-    const inStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true; // iOS
-    if (inStandalone) {
-      // Open the real app full-screen (no URL bar).
-      window.location.replace(APP_URL);
-    }
+    // If already installed, jump straight to the real app
+    const inStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    if (inStandalone) window.location.replace(APP_URL);
 
-    // --- Register the service worker at the ROOT so it controls the whole origin ---
+    // Register SW
     if ('serviceWorker' in navigator) {
-      // Always re-check for updates when we hit this page
       window.addEventListener('load', async () => {
         try {
           const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-          // Force an update check on each load so changes propagate quickly
           if (reg.update) reg.update();
         } catch(e){ console.warn('SW register failed', e); }
       });
     }
 
-    // --- Polite install flow with fallback ---
+    // Install flow
     let deferredPrompt = null;
     const installBtn = document.getElementById('installBtn');
     const hint = document.getElementById('hint');
 
-    // Capture the event so we can show our own button
     window.addEventListener('beforeinstallprompt', (e) => {
+      // Browser says we're installable: use native prompt
       e.preventDefault();
       deferredPrompt = e;
-      installBtn.style.display = 'inline-block';
       hint.textContent = '';
     });
 
-    // If the browser doesn’t fire beforeinstallprompt (common on some devices),
-    // show a short fallback hint for using the menu.
-    function showMenuHint() {
-      const isAndroidChrome = /Android/i.test(navigator.userAgent) && /Chrome/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.platform) || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
-      if (isIOS) {
-        hint.textContent = "On iPhone/iPad: Share button → 'Add to Home Screen'.";
-      } else if (isAndroidChrome) {
-        hint.textContent = "If no popup shows, use Chrome menu ⋮ → 'Install app'.";
-      } else {
-        hint.textContent = "Use your browser menu to 'Install' or 'Add to Home screen'.";
-      }
-    }
-
-    // If we didn’t receive beforeinstallprompt within a second, show the hint
-    setTimeout(() => {
-      if (!deferredPrompt && !inStandalone) showMenuHint();
-    }, 1200);
-
-    // When the user taps "Install", trigger the native prompt
+    // Always show the button. If no native prompt, we’ll show instructions.
     installBtn.addEventListener('click', async () => {
-      installBtn.disabled = true;
-      try {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const choice = await deferredPrompt.userChoice;
-          deferredPrompt = null;
-          installBtn.style.display = 'none';
-          if (choice.outcome !== 'accepted') showMenuHint();
-        } else {
-          // Fallback path if event wasn’t captured
-          showMenuHint();
-          alert("If no popup shows, use your browser menu → 'Install app' / 'Add to Home screen'.");
-        }
-      } finally {
-        installBtn.disabled = false;
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (outcome !== 'accepted') showInstructions(); // user dismissed
+      } else {
+        showInstructions(); // native prompt not available on this browser/device
       }
     });
+
+    // Gentle hint after a second if native prompt not ready
+    setTimeout(() => {
+      if (!deferredPrompt && !inStandalone) {
+        hint.textContent = installHintForBrowser();
+      }
+    }, 1200);
+
+    // ------------- Instructions modal -------------
+    const backdrop = document.getElementById('backdrop');
+    const steps = document.getElementById('steps');
+    const closeModal = document.getElementById('closeModal');
+    closeModal.addEventListener('click', () => backdrop.style.display = 'none');
+
+    function showInstructions() {
+      steps.innerHTML = instructionsHTML();
+      backdrop.style.display = 'flex';
+    }
+
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.platform) ||
+             (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+    }
+    function isSamsung() { return /SamsungBrowser/i.test(navigator.userAgent); }
+    function isEdge() { return /EdgA|Edg/i.test(navigator.userAgent); }
+    function isChromeAndroid() {
+      return /Android/i.test(navigator.userAgent) && /Chrome/i.test(navigator.userAgent) && !isSamsung() && !isEdge();
+    }
+
+    function installHintForBrowser(){
+      if (isIOS()) return "On iPhone/iPad: Share button → 'Add to Home Screen'.";
+      if (isSamsung()) return "Samsung Internet: menu ≡ → 'Add page to' → 'Home screen'.";
+      if (isEdge()) return "Microsoft Edge: ⋮ → 'Add to phone'.";
+      if (isChromeAndroid()) return "Chrome: ⋮ → 'Install app'.";
+      return "Use your browser menu to 'Install app' or 'Add to Home screen'.";
+    }
+
+    function instructionsHTML(){
+      if (isIOS()) {
+        return `
+          <p>iPhone / iPad (Safari):</p>
+          <ol>
+            <li>Tap the <strong>Share</strong> button.</li>
+            <li>Choose <strong>Add to Home Screen</strong>.</li>
+            <li>Tap <strong>Add</strong>.</li>
+            <li>Open the new <strong>WellnessCoach</strong> icon.</li>
+          </ol>`;
+      }
+      if (isSamsung()) {
+        return `
+          <p>Samsung Internet:</p>
+          <ol>
+            <li>Tap the <strong>≡</strong> menu.</li>
+            <li>Choose <strong>Add page to</strong> → <strong>Home screen</strong>.</li>
+            <li>Open the new <strong>WellnessCoach</strong> icon.</li>
+          </ol>`;
+      }
+      if (isEdge()) {
+        return `
+          <p>Microsoft Edge:</p>
+          <ol>
+            <li>Tap the <strong>⋮</strong> menu.</li>
+            <li>Choose <strong>Add to phone</strong> (or <strong>Install app</strong>).</li>
+            <li>Open the <strong>WellnessCoach</strong> icon.</li>
+          </ol>`;
+      }
+      // default (Chrome & others)
+      return `
+        <p>Chrome on Android:</p>
+        <ol>
+          <li>Tap the <strong>⋮</strong> menu in the top-right.</li>
+          <li>Choose <strong>Install app</strong> (or <strong>Add to Home screen</strong>).</li>
+          <li>Open the new <strong>WellnessCoach</strong> icon.</li>
+        </ol>`;
+    }
   </script>
 </body>
 </html>
